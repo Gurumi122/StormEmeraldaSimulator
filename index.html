@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ストームエメラルダ BOX開封シミュレーター</title>
+<style>
+:root {
+  --bg:#f4f7fb; --panel:#fff; --text:#18212f; --muted:#687386;
+  --line:#dbe2ec; --accent:#147d68; --accent2:#0d5b4c;
+  --C:#eef1f5; --U:#dbeafe; --R:#fde68a; --RR:#f9a8d4; --AR:#c4b5fd; --SR:#fca5a5;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1180px;margin:auto;padding:24px}
+header{background:linear-gradient(135deg,#073b32,#14977d);color:white;border-radius:18px;padding:24px 28px;box-shadow:0 10px 30px #0b4f4226}
+h1{margin:0 0 8px;font-size:clamp(24px,4vw,38px)} header p{margin:0;opacity:.9}
+.controls,.summary,.half{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 5px 18px #26364d12}
+.controls{margin-top:18px;padding:18px;display:flex;gap:16px;align-items:end;flex-wrap:wrap}
+.field{display:grid;gap:6px;min-width:210px} label{font-size:13px;color:var(--muted);font-weight:700}
+input[type=number]{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;width:110px}
+button{border:0;border-radius:11px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer}
+.primary{background:var(--accent);color:white} .primary:hover{background:var(--accent2)}
+.secondary{background:#e8edf4;color:#26364d}
+.note{font-size:12px;color:var(--muted);line-height:1.6;flex:1;min-width:280px}
+.summary{margin-top:18px;padding:16px}
+.summary-grid{display:grid;grid-template-columns:repeat(6,minmax(80px,1fr));gap:10px}
+.sum-card{border-radius:12px;padding:12px;text-align:center;border:1px solid #00000012}
+.sum-card b{display:block;font-size:25px;margin-top:2px}
+.C{background:var(--C)} .U{background:var(--U)} .R{background:var(--R)} .RR{background:var(--RR)} .AR{background:var(--AR)} .SR{background:var(--SR)}
+.halves{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.half{padding:16px;overflow:hidden} .half h2{margin:0 0 12px;font-size:20px}
+.pack-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pack{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.pack-title{padding:8px 10px;background:#eef3f8;font-weight:800;border-bottom:1px solid var(--line)}
+.card{display:grid;grid-template-columns:42px 1fr 38px;gap:7px;padding:7px 9px;border-bottom:1px solid #edf0f4;align-items:center;font-size:13px}
+.card:last-child{border-bottom:0} .num{font-variant-numeric:tabular-nums;color:#566173} .rar{font-weight:900;text-align:center;border-radius:6px;padding:2px 4px}
+.hit{font-weight:800}
+.footer-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+@media(max-width:900px){.halves{grid-template-columns:1fr} .pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .summary-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.wrap{padding:12px} .pack-grid{grid-template-columns:1fr} .summary-grid{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:white} .controls,.footer-actions{display:none} header{box-shadow:none} .halves{grid-template-columns:1fr 1fr} .pack-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>ストームエメラルダ BOX開封シミュレーター</h1>
+  <p>30パックを「前半15パック」「後半15パック」に分けて表示</p>
+</header>
+
+<section class="controls">
+  <div class="field">
+    <label for="extraChance">通常SRが2枚になる確率（＝SR合計3枚）</label>
+    <div><input id="extraChance" type="number" min="0" max="100" step="1" value="10"> %</div>
+  </div>
+  <button class="primary" onclick="simulate()">1箱開封する</button>
+  <button class="secondary" onclick="window.print()">印刷 / PDF保存</button>
+  <div class="note">
+    <h3 style="margin:0 0 6px;font-size:14px;color:var(--text);">封入仕様</h3>
+    <ul style="margin:0;padding-left:20px;line-height:1.7;">
+      <li>各パックは基本的に <strong>C・C・C・U・U</strong> の順で封入され、R以上のカードは4枚目のU枠と置き換わる。</li>
+      <li>同一レアリティ内では、1箱の中で特定のカードに偏りすぎないよう、できるだけ均等に封入される。</li>
+      <li>SRは「097–099・104–106」から1枚、それ以外から1枚封入される。設定した確率で、それ以外からさらに1枚追加される。</li>
+      <li>「伝説の海溝」「伝説の山頂」「伝説の溶岩洞」は、左右2枚を1セットとして扱い、同一パックのU・U枠に揃って封入される確定パックが1つずつ存在する。</li>
+      <li>通常のU枠から、伝説カードの片側が1枚ずつ追加で出現する場合もある。</li>
+      <li>
+        <a href="https://www.pokemon-card.com/ex/m6/" target="_blank" rel="noopener noreferrer">
+          カードリスト（ポケモンカード公式）
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="summary">
+  <div id="summary" class="summary-grid"></div>
+  <div id="srNote" style="margin-top:12px;font-size:14px"></div>
+</section>
+
+<div class="halves">
+  <section class="half"><h2>前半：1〜15パック</h2><div id="half1" class="pack-grid"></div></section>
+  <section class="half"><h2>後半：16〜30パック</h2><div id="half2" class="pack-grid"></div></section>
+</div>
+
+<div class="footer-actions">
+  <button class="secondary" onclick="downloadExcel()">今回の結果をExcel保存</button>
+  <button class="primary" onclick="simulate()">もう1箱開封</button>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const CARDS = [{"no": "001", "name": "ヘラクロス", "rarity": "C"}, {"no": "002", "name": "アメタマ", "rarity": "C"}, {"no": "003", "name": "アメモース", "rarity": "C"}, {"no": "004", "name": "サボネア", "rarity": "C"}, {"no": "005", "name": "ノクタス", "rarity": "R"}, {"no": "006", "name": "ミツハニー", "rarity": "C"}, {"no": "007", "name": "ビークイン", "rarity": "C"}, {"no": "008", "name": "コソクムシ", "rarity": "C"}, {"no": "009", "name": "メガグソクムシャex", "rarity": "RR"}, {"no": "010", "name": "ガーディ", "rarity": "C"}, {"no": "011", "name": "ウインディ", "rarity": "R"}, {"no": "012", "name": "ブーバー", "rarity": "C"}, {"no": "013", "name": "ブーバーン", "rarity": "U"}, {"no": "014", "name": "コータス", "rarity": "C"}, {"no": "015", "name": "ヒートロトムex", "rarity": "RR"}, {"no": "016", "name": "クイタラン", "rarity": "C"}, {"no": "017", "name": "マンタイン", "rarity": "C"}, {"no": "018", "name": "カイオーガ", "rarity": "R"}, {"no": "019", "name": "プルリル", "rarity": "C"}, {"no": "020", "name": "ブルンゲル", "rarity": "U"}, {"no": "021", "name": "ヨワシex", "rarity": "RR"}, {"no": "022", "name": "エレブー", "rarity": "C"}, {"no": "023", "name": "エレキブル", "rarity": "U"}, {"no": "024", "name": "ライコウex", "rarity": "RR"}, {"no": "025", "name": "ボルトロス", "rarity": "U"}, {"no": "026", "name": "バチンウニ", "rarity": "C"}, {"no": "027", "name": "カイデン", "rarity": "C"}, {"no": "028", "name": "タイカイデン", "rarity": "U"}, {"no": "029", "name": "スリープ", "rarity": "C"}, {"no": "030", "name": "スリーパー", "rarity": "C"}, {"no": "031", "name": "ギラティナ", "rarity": "R"}, {"no": "032", "name": "ゴビット", "rarity": "C"}, {"no": "033", "name": "メガゴルーグex", "rarity": "RR"}, {"no": "034", "name": "ラブトロス", "rarity": "U"}, {"no": "035", "name": "サンド", "rarity": "C"}, {"no": "036", "name": "サンドパン", "rarity": "C"}, {"no": "037", "name": "イワーク", "rarity": "C"}, {"no": "038", "name": "ハガネール", "rarity": "U"}, {"no": "039", "name": "グラードン", "rarity": "R"}, {"no": "040", "name": "ランドロス", "rarity": "U"}, {"no": "041", "name": "ニドラン♀", "rarity": "C"}, {"no": "042", "name": "ニドリーナ", "rarity": "C"}, {"no": "043", "name": "ニドクイン", "rarity": "R"}, {"no": "044", "name": "イトマル", "rarity": "C"}, {"no": "045", "name": "アリアドス", "rarity": "C"}, {"no": "046", "name": "ヤミラミ", "rarity": "C"}, {"no": "047", "name": "マーイーカ", "rarity": "C"}, {"no": "048", "name": "メガカラマネロex", "rarity": "RR"}, {"no": "049", "name": "クリムガン", "rarity": "U"}, {"no": "050", "name": "ジャラコ", "rarity": "C"}, {"no": "051", "name": "ジャランゴ", "rarity": "C"}, {"no": "052", "name": "ジャラランガ", "rarity": "R"}, {"no": "053", "name": "モトトカゲ", "rarity": "C"}, {"no": "054", "name": "ルリリ", "rarity": "C"}, {"no": "055", "name": "チルット", "rarity": "C"}, {"no": "056", "name": "チルタリス", "rarity": "R"}, {"no": "057", "name": "カクレオン", "rarity": "C"}, {"no": "058", "name": "メガレックウザex", "rarity": "RR"}, {"no": "059", "name": "トルネロス", "rarity": "U"}, {"no": "060", "name": "ヤヤコマ", "rarity": "C"}, {"no": "061", "name": "ヒノヤコマ", "rarity": "C"}, {"no": "062", "name": "ファイアローex", "rarity": "RR"}, {"no": "063", "name": "おいしいおむすび", "rarity": "C"}, {"no": "064", "name": "ぼうけんのランタン", "rarity": "U"}, {"no": "065", "name": "とくちゅうチョッキ", "rarity": "U"}, {"no": "066", "name": "メガレックウザキャップ", "rarity": "U"}, {"no": "067", "name": "MCの盛り上げ", "rarity": "C"}, {"no": "068", "name": "ギリー", "rarity": "U"}, {"no": "069", "name": "ヒガナの信頼", "rarity": "U"}, {"no": "070", "name": "フウとランの修行", "rarity": "U"}, {"no": "071", "name": "伝説の海溝（左）", "rarity": "U"}, {"no": "072", "name": "伝説の海溝（右）", "rarity": "U"}, {"no": "073", "name": "伝説の山頂（左）", "rarity": "U"}, {"no": "074", "name": "伝説の山頂（右）", "rarity": "U"}, {"no": "075", "name": "伝説の溶岩洞（左）", "rarity": "U"}, {"no": "076", "name": "伝説の溶岩洞（右）", "rarity": "U"}, {"no": "077", "name": "アメモース", "rarity": "AR"}, {"no": "078", "name": "ガーディ", "rarity": "AR"}, {"no": "079", "name": "ブーバーン", "rarity": "AR"}, {"no": "080", "name": "カイオーガ", "rarity": "AR"}, {"no": "081", "name": "エレキブル", "rarity": "AR"}, {"no": "082", "name": "バチンウニ", "rarity": "AR"}, {"no": "083", "name": "ラブトロス", "rarity": "AR"}, {"no": "084", "name": "グラードン", "rarity": "AR"}, {"no": "085", "name": "マーイーカ", "rarity": "AR"}, {"no": "086", "name": "ルリリ", "rarity": "AR"}, {"no": "087", "name": "チルタリス", "rarity": "AR"}, {"no": "088", "name": "カクレオン", "rarity": "AR"}, {"no": "089", "name": "メガグソクムシャex", "rarity": "SR"}, {"no": "090", "name": "ヒートロトムex", "rarity": "SR"}, {"no": "091", "name": "ヨワシex", "rarity": "SR"}, {"no": "092", "name": "ライコウex", "rarity": "SR"}, {"no": "093", "name": "メガゴルーグex", "rarity": "SR"}, {"no": "094", "name": "メガカラマネロex", "rarity": "SR"}, {"no": "095", "name": "メガレックウザex", "rarity": "SR"}, {"no": "096", "name": "ファイアローex", "rarity": "SR"}, {"no": "097", "name": "ぼうけんのランタン", "rarity": "SR"}, {"no": "098", "name": "ポケモンキャッチャー", "rarity": "SR"}, {"no": "099", "name": "とくちゅうチョッキ", "rarity": "SR"}, {"no": "100", "name": "MCの盛り上げ", "rarity": "SR"}, {"no": "101", "name": "ギリー", "rarity": "SR"}, {"no": "102", "name": "ヒガナの信頼", "rarity": "SR"}, {"no": "103", "name": "フウとランの修行", "rarity": "SR"}, {"no": "104", "name": "グロウ草エネルギー", "rarity": "SR"}, {"no": "105", "name": "ニトロ炎エネルギー", "rarity": "SR"}, {"no": "106", "name": "バブル水エネルギー", "rarity": "SR"}];
+let lastPacks = [];
+
+const byRarity = r => CARDS.filter(c => c.rarity === r);
+const specialSR = CARDS.filter(c => c.rarity === "SR" && (["097","098","099","104","105","106"].includes(c.no)));
+const normalSR = CARDS.filter(c => c.rarity === "SR" && !["097","098","099","104","105","106"].includes(c.no));
+const legends = CARDS.filter(c => ["071","072","073","074","075","076"].includes(c.no));
+const normalU = byRarity("U");
+
+function randInt(n) { return Math.floor(Math.random()*n); }
+function pick(arr) { return arr[randInt(arr.length)]; }
+function shuffle(a) {
+  a=[...a];
+  for(let i=a.length-1;i>0;i--){const j=randInt(i+1);[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+}
+function clone(c) { return {...c}; }
+
+// 全種類を一巡してから次の周回に入るため、同一カードへの極端な偏りを防ぐ
+function balancedCards(arr, n) {
+  const result = [];
+  while(result.length < n) {
+    const cycle = shuffle(arr);
+    for(const card of cycle) {
+      if(result.length >= n) break;
+      result.push(clone(card));
+    }
+  }
+  return result;
+}
+
+// 指定枚数以下なら重複なし。種類数を超える場合も均等に周回する
+function balancedHits(arr, n) {
+  return balancedCards(arr, n);
+}
+
+function simulate() {
+  const chance = Math.max(0,Math.min(100,Number(document.getElementById("extraChance").value)||0));
+  const extraNormalSR = Math.random()*100 < chance;
+
+  // R・RR・ARは、同一BOX内で可能な限り重複を避ける
+  const hits = [
+    ...balancedHits(byRarity("R"), 6),
+    ...balancedHits(byRarity("RR"), 4),
+    ...balancedHits(byRarity("AR"), 3)
+  ];
+
+  // SRも同じグループ内で重複を避ける
+  const specialPick = clone(pick(specialSR));
+  const shuffledNormalSR = shuffle(normalSR);
+  const srHits = [specialPick, clone(shuffledNormalSR[0])];
+  if(extraNormalSR) srHits.push(clone(shuffledNormalSR[1]));
+  hits.push(...srHits);
+
+  // 伝説セット3種を、それぞれ別のパックのU・U枠に固定
+  const fixedLegendPairs = [
+    [clone(CARDS.find(c=>c.no==="071")), clone(CARDS.find(c=>c.no==="072"))],
+    [clone(CARDS.find(c=>c.no==="073")), clone(CARDS.find(c=>c.no==="074"))],
+    [clone(CARDS.find(c=>c.no==="075")), clone(CARDS.find(c=>c.no==="076"))]
+  ];
+
+  const allPackIndexes = shuffle(Array.from({length:30},(_,i)=>i));
+  const fixedLegendPackIndexes = allPackIndexes.slice(0,3);
+  const otherPackIndexes = allPackIndexes.slice(3);
+
+  // R以上は固定伝説パックを避け、4枚目に最大1枚
+  const hitPackIndexes = otherPackIndexes.slice(0,hits.length);
+  const hitByPack = new Map();
+  shuffle(hits).forEach((card,i)=>hitByPack.set(hitPackIndexes[i],card));
+
+  const fixedLegendByPack = new Map();
+  shuffle(fixedLegendPairs).forEach((pair,i)=>fixedLegendByPack.set(fixedLegendPackIndexes[i],pair));
+
+  // 固定伝説6枚とR以上による置換分を除いた通常U枠を均等化。
+  // 追加の伝説カード（071〜076）は、ほかのUと同様に1枚単位で入る。
+  const remainingUSlots = 60 - 6 - hits.length;
+  const uPool = balancedCards(normalU, remainingUSlots);
+
+  // Cは全種類を一巡してから重複する方式で、90枚をできるだけ均等化
+  const cPool = balancedCards(byRarity("C"), 90);
+  let cIndex = 0;
+  let uIndex = 0;
+
+  lastPacks = Array.from({length:30},(_,packIndex)=>{
+    const pack = [
+      cPool[cIndex++],
+      cPool[cIndex++],
+      cPool[cIndex++]
+    ];
+
+    if(fixedLegendByPack.has(packIndex)) {
+      const pair = fixedLegendByPack.get(packIndex);
+      pack.push(pair[0], pair[1]);
+    } else {
+      if(hitByPack.has(packIndex)) {
+        pack.push(hitByPack.get(packIndex));
+      } else {
+        pack.push(uPool[uIndex++]);
+      }
+      pack.push(uPool[uIndex++]);
+    }
+
+    return pack;
+  });
+
+  renderSummary(srHits);
+  renderHalf("half1",lastPacks.slice(0,15),1);
+  renderHalf("half2",lastPacks.slice(15),16);
+}
+
+function renderSummary(srHits) {
+  const counts = {};
+  lastPacks.flat().forEach(c=>counts[c.rarity]=(counts[c.rarity]||0)+1);
+  document.getElementById("summary").innerHTML =
+    ["C","U","R","RR","AR","SR"].map(r=>`<div class="sum-card ${r}"><span>${r}</span><b>${counts[r]||0}</b></div>`).join("");
+  document.getElementById("srNote").innerHTML =
+    `<b>SR枠：</b> ${srHits.map(c=>`${c.no} ${escapeHtml(c.name)}`).join(" ／ ")}`;
+}
+
+function renderHalf(id,packs,startNo) {
+  document.getElementById(id).innerHTML = packs.map((pack,idx)=>`
+    <div class="pack">
+      <div class="pack-title">${startNo+idx}パック目</div>
+      ${pack.map(c=>`
+        <div class="card ${["RR","AR","SR"].includes(c.rarity)?"hit":""}">
+          <span class="num">${c.no}</span>
+          <span>${escapeHtml(c.name)}</span>
+          <span class="rar ${c.rarity}">${c.rarity}</span>
+        </div>`).join("")}
+    </div>`).join("");
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function downloadExcel() {
+  if(!lastPacks.length) return;
+  if(typeof XLSX === "undefined") {
+    alert("Excel出力ライブラリを読み込めませんでした。インターネット接続を確認してください。");
+    return;
+  }
+
+  const makeSheet = (packs, startPackNo) => {
+    const rows = [["パック", "番号", "カード名", "レアリティ"]];
+    packs.forEach((pack, packIndex) => {
+      pack.forEach(card => {
+        rows.push([startPackNo + packIndex, card.no, card.name, card.rarity]);
+      });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [
+      {wch: 8},
+      {wch: 10},
+      {wch: 28},
+      {wch: 12}
+    ];
+    ws["!autofilter"] = {ref: `A1:D${rows.length}`};
+    ws["!freeze"] = {xSplit: 0, ySplit: 1};
+    ws["!margins"] = {left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2};
+    ws["!pageSetup"] = {orientation: "portrait", fitToWidth: 1, fitToHeight: 1, paperSize: 9};
+    return ws;
+  };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, makeSheet(lastPacks.slice(0, 15), 1), "1-15パック");
+  XLSX.utils.book_append_sheet(wb, makeSheet(lastPacks.slice(15, 30), 16), "16-30パック");
+  XLSX.writeFile(wb, "ストームエメラルダ_BOX開封結果.xlsx");
+}
+
+simulate();
+</script>
+</body>
+</html>
