@@ -75,11 +75,12 @@ button{border:0;border-radius:11px;padding:12px 18px;font:inherit;font-weight:80
 </div>
 
 <div class="footer-actions">
-  <button class="secondary" onclick="downloadCSV()">今回の結果をCSV保存</button>
+  <button class="secondary" onclick="downloadExcel()">今回の結果をExcel保存</button>
   <button class="primary" onclick="simulate()">もう1箱開封</button>
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const CARDS = [{"no": "001", "name": "ヘラクロス", "rarity": "C"}, {"no": "002", "name": "アメタマ", "rarity": "C"}, {"no": "003", "name": "アメモース", "rarity": "C"}, {"no": "004", "name": "サボネア", "rarity": "C"}, {"no": "005", "name": "ノクタス", "rarity": "R"}, {"no": "006", "name": "ミツハニー", "rarity": "C"}, {"no": "007", "name": "ビークイン", "rarity": "C"}, {"no": "008", "name": "コソクムシ", "rarity": "C"}, {"no": "009", "name": "メガグソクムシャex", "rarity": "RR"}, {"no": "010", "name": "ガーディ", "rarity": "C"}, {"no": "011", "name": "ウインディ", "rarity": "R"}, {"no": "012", "name": "ブーバー", "rarity": "C"}, {"no": "013", "name": "ブーバーン", "rarity": "U"}, {"no": "014", "name": "コータス", "rarity": "C"}, {"no": "015", "name": "ヒートロトムex", "rarity": "RR"}, {"no": "016", "name": "クイタラン", "rarity": "C"}, {"no": "017", "name": "マンタイン", "rarity": "C"}, {"no": "018", "name": "カイオーガ", "rarity": "R"}, {"no": "019", "name": "プルリル", "rarity": "C"}, {"no": "020", "name": "ブルンゲル", "rarity": "U"}, {"no": "021", "name": "ヨワシex", "rarity": "RR"}, {"no": "022", "name": "エレブー", "rarity": "C"}, {"no": "023", "name": "エレキブル", "rarity": "U"}, {"no": "024", "name": "ライコウex", "rarity": "RR"}, {"no": "025", "name": "ボルトロス", "rarity": "U"}, {"no": "026", "name": "バチンウニ", "rarity": "C"}, {"no": "027", "name": "カイデン", "rarity": "C"}, {"no": "028", "name": "タイカイデン", "rarity": "U"}, {"no": "029", "name": "スリープ", "rarity": "C"}, {"no": "030", "name": "スリーパー", "rarity": "C"}, {"no": "031", "name": "ギラティナ", "rarity": "R"}, {"no": "032", "name": "ゴビット", "rarity": "C"}, {"no": "033", "name": "メガゴルーグex", "rarity": "RR"}, {"no": "034", "name": "ラブトロス", "rarity": "U"}, {"no": "035", "name": "サンド", "rarity": "C"}, {"no": "036", "name": "サンドパン", "rarity": "C"}, {"no": "037", "name": "イワーク", "rarity": "C"}, {"no": "038", "name": "ハガネール", "rarity": "U"}, {"no": "039", "name": "グラードン", "rarity": "R"}, {"no": "040", "name": "ランドロス", "rarity": "U"}, {"no": "041", "name": "ニドラン♀", "rarity": "C"}, {"no": "042", "name": "ニドリーナ", "rarity": "C"}, {"no": "043", "name": "ニドクイン", "rarity": "R"}, {"no": "044", "name": "イトマル", "rarity": "C"}, {"no": "045", "name": "アリアドス", "rarity": "C"}, {"no": "046", "name": "ヤミラミ", "rarity": "C"}, {"no": "047", "name": "マーイーカ", "rarity": "C"}, {"no": "048", "name": "メガカラマネロex", "rarity": "RR"}, {"no": "049", "name": "クリムガン", "rarity": "U"}, {"no": "050", "name": "ジャラコ", "rarity": "C"}, {"no": "051", "name": "ジャランゴ", "rarity": "C"}, {"no": "052", "name": "ジャラランガ", "rarity": "R"}, {"no": "053", "name": "モトトカゲ", "rarity": "C"}, {"no": "054", "name": "ルリリ", "rarity": "C"}, {"no": "055", "name": "チルット", "rarity": "C"}, {"no": "056", "name": "チルタリス", "rarity": "R"}, {"no": "057", "name": "カクレオン", "rarity": "C"}, {"no": "058", "name": "メガレックウザex", "rarity": "RR"}, {"no": "059", "name": "トルネロス", "rarity": "U"}, {"no": "060", "name": "ヤヤコマ", "rarity": "C"}, {"no": "061", "name": "ヒノヤコマ", "rarity": "C"}, {"no": "062", "name": "ファイアローex", "rarity": "RR"}, {"no": "063", "name": "おいしいおむすび", "rarity": "C"}, {"no": "064", "name": "ぼうけんのランタン", "rarity": "U"}, {"no": "065", "name": "とくちゅうチョッキ", "rarity": "U"}, {"no": "066", "name": "メガレックウザキャップ", "rarity": "U"}, {"no": "067", "name": "MCの盛り上げ", "rarity": "C"}, {"no": "068", "name": "ギリー", "rarity": "U"}, {"no": "069", "name": "ヒガナの信頼", "rarity": "U"}, {"no": "070", "name": "フウとランの修行", "rarity": "U"}, {"no": "071", "name": "伝説の海溝（左）", "rarity": "U"}, {"no": "072", "name": "伝説の海溝（右）", "rarity": "U"}, {"no": "073", "name": "伝説の山頂（左）", "rarity": "U"}, {"no": "074", "name": "伝説の山頂（右）", "rarity": "U"}, {"no": "075", "name": "伝説の溶岩洞（左）", "rarity": "U"}, {"no": "076", "name": "伝説の溶岩洞（右）", "rarity": "U"}, {"no": "077", "name": "アメモース", "rarity": "AR"}, {"no": "078", "name": "ガーディ", "rarity": "AR"}, {"no": "079", "name": "ブーバーン", "rarity": "AR"}, {"no": "080", "name": "カイオーガ", "rarity": "AR"}, {"no": "081", "name": "エレキブル", "rarity": "AR"}, {"no": "082", "name": "バチンウニ", "rarity": "AR"}, {"no": "083", "name": "ラブトロス", "rarity": "AR"}, {"no": "084", "name": "グラードン", "rarity": "AR"}, {"no": "085", "name": "マーイーカ", "rarity": "AR"}, {"no": "086", "name": "ルリリ", "rarity": "AR"}, {"no": "087", "name": "チルタリス", "rarity": "AR"}, {"no": "088", "name": "カクレオン", "rarity": "AR"}, {"no": "089", "name": "メガグソクムシャex", "rarity": "SR"}, {"no": "090", "name": "ヒートロトムex", "rarity": "SR"}, {"no": "091", "name": "ヨワシex", "rarity": "SR"}, {"no": "092", "name": "ライコウex", "rarity": "SR"}, {"no": "093", "name": "メガゴルーグex", "rarity": "SR"}, {"no": "094", "name": "メガカラマネロex", "rarity": "SR"}, {"no": "095", "name": "メガレックウザex", "rarity": "SR"}, {"no": "096", "name": "ファイアローex", "rarity": "SR"}, {"no": "097", "name": "ぼうけんのランタン", "rarity": "SR"}, {"no": "098", "name": "ポケモンキャッチャー", "rarity": "SR"}, {"no": "099", "name": "とくちゅうチョッキ", "rarity": "SR"}, {"no": "100", "name": "MCの盛り上げ", "rarity": "SR"}, {"no": "101", "name": "ギリー", "rarity": "SR"}, {"no": "102", "name": "ヒガナの信頼", "rarity": "SR"}, {"no": "103", "name": "フウとランの修行", "rarity": "SR"}, {"no": "104", "name": "グロウ草エネルギー", "rarity": "SR"}, {"no": "105", "name": "ニトロ炎エネルギー", "rarity": "SR"}, {"no": "106", "name": "バブル水エネルギー", "rarity": "SR"}];
 let lastPacks = [];
@@ -198,15 +199,39 @@ function escapeHtml(s) {
   return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
 
-function downloadCSV() {
+function downloadExcel() {
   if(!lastPacks.length) return;
-  const rows=[["パック","番号","カード名","レアリティ"]];
-  lastPacks.forEach((p,i)=>p.forEach(c=>rows.push([i+1,c.no,c.name,c.rarity])));
-  const csv="\uFEFF"+rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\r\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob); a.download="ストームエメラルダ_BOX開封結果.csv"; a.click();
-  URL.revokeObjectURL(a.href);
+  if(typeof XLSX === "undefined") {
+    alert("Excel出力ライブラリを読み込めませんでした。インターネット接続を確認してください。");
+    return;
+  }
+
+  const makeSheet = (packs, startPackNo) => {
+    const rows = [["パック", "番号", "カード名", "レアリティ"]];
+    packs.forEach((pack, packIndex) => {
+      pack.forEach(card => {
+        rows.push([startPackNo + packIndex, card.no, card.name, card.rarity]);
+      });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [
+      {wch: 8},
+      {wch: 10},
+      {wch: 28},
+      {wch: 12}
+    ];
+    ws["!autofilter"] = {ref: `A1:D${rows.length}`};
+    ws["!freeze"] = {xSplit: 0, ySplit: 1};
+    ws["!margins"] = {left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2};
+    ws["!pageSetup"] = {orientation: "portrait", fitToWidth: 1, fitToHeight: 1, paperSize: 9};
+    return ws;
+  };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, makeSheet(lastPacks.slice(0, 15), 1), "1-15パック");
+  XLSX.utils.book_append_sheet(wb, makeSheet(lastPacks.slice(15, 30), 16), "16-30パック");
+  XLSX.writeFile(wb, "ストームエメラルダ_BOX開封結果.xlsx");
 }
 
 simulate();
