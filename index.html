@@ -57,10 +57,19 @@ button{border:0;border-radius:11px;padding:12px 18px;font:inherit;font-weight:80
   <button class="primary" onclick="simulate()">1箱開封する</button>
   <button class="secondary" onclick="window.print()">印刷 / PDF保存</button>
   <div class="note">
-    各パックは基本的に「C・C・C・U・U」の順で封入され、R以上のカードは4枚目のU枠と置き換わります。
-    SRは「097–099・104–106」から1枚＋それ以外から1枚。設定した確率で、それ以外からもう1枚追加します。
-    「伝説の海溝」「伝説の山頂」「伝説の溶岩洞」は、それぞれ左右2枚が同じ1パックのU・U枠に揃って入る確定パックが1つずつあります。
-    さらに、通常のU枠から伝説カードが追加で出る場合もあります。
+    <h3 style="margin:0 0 6px;font-size:14px;color:var(--text);">封入仕様</h3>
+    <ul style="margin:0;padding-left:20px;line-height:1.7;">
+      <li>各パックは基本的に <strong>C・C・C・U・U</strong> の順で封入され、R以上のカードは4枚目のU枠と置き換わる。</li>
+      <li>同一レアリティ内では、1箱の中で特定のカードに偏りすぎないよう、できるだけ均等に封入される。</li>
+      <li>SRは「097–099・104–106」から1枚、それ以外から1枚封入される。設定した確率で、それ以外からさらに1枚追加される。</li>
+      <li>「伝説の海溝」「伝説の山頂」「伝説の溶岩洞」は、左右2枚を1セットとして扱い、同一パックのU・U枠に揃って封入される確定パックが1つずつ存在する。</li>
+      <li>通常のU枠から、伝説カードの片側が1枚ずつ追加で出現する場合もある。</li>
+      <li>
+        <a href="https://www.pokemon-card.com/ex/m6/" target="_blank" rel="noopener noreferrer">
+          カードリスト（ポケモンカード公式）
+        </a>
+      </li>
+    </ul>
   </div>
 </section>
 
@@ -93,7 +102,6 @@ const normalU = byRarity("U");
 
 function randInt(n) { return Math.floor(Math.random()*n); }
 function pick(arr) { return arr[randInt(arr.length)]; }
-function sampleWithReplacement(arr,n) { return Array.from({length:n},()=>pick(arr)); }
 function shuffle(a) {
   a=[...a];
   for(let i=a.length-1;i>0;i--){const j=randInt(i+1);[a[i],a[j]]=[a[j],a[i]]}
@@ -101,46 +109,68 @@ function shuffle(a) {
 }
 function clone(c) { return {...c}; }
 
+// 全種類を一巡してから次の周回に入るため、同一カードへの極端な偏りを防ぐ
+function balancedCards(arr, n) {
+  const result = [];
+  while(result.length < n) {
+    const cycle = shuffle(arr);
+    for(const card of cycle) {
+      if(result.length >= n) break;
+      result.push(clone(card));
+    }
+  }
+  return result;
+}
+
+// 指定枚数以下なら重複なし。種類数を超える場合も均等に周回する
+function balancedHits(arr, n) {
+  return balancedCards(arr, n);
+}
+
 function simulate() {
   const chance = Math.max(0,Math.min(100,Number(document.getElementById("extraChance").value)||0));
   const extraNormalSR = Math.random()*100 < chance;
 
-  // 1箱分のR以上のカードを用意
+  // R・RR・ARは、同一BOX内で可能な限り重複を避ける
   const hits = [
-    ...sampleWithReplacement(byRarity("R"),6).map(clone),
-    ...sampleWithReplacement(byRarity("RR"),4).map(clone),
-    ...sampleWithReplacement(byRarity("AR"),3).map(clone)
+    ...balancedHits(byRarity("R"), 6),
+    ...balancedHits(byRarity("RR"), 4),
+    ...balancedHits(byRarity("AR"), 3)
   ];
 
-  const srHits = [clone(pick(specialSR)), clone(pick(normalSR))];
-  if(extraNormalSR) srHits.push(clone(pick(normalSR)));
+  // SRも同じグループ内で重複を避ける
+  const specialPick = clone(pick(specialSR));
+  const shuffledNormalSR = shuffle(normalSR);
+  const srHits = [specialPick, clone(shuffledNormalSR[0])];
+  if(extraNormalSR) srHits.push(clone(shuffledNormalSR[1]));
   hits.push(...srHits);
 
   // 伝説セット3種を、それぞれ別のパックのU・U枠に固定
-  const legendPairs = [
+  const fixedLegendPairs = [
     [clone(CARDS.find(c=>c.no==="071")), clone(CARDS.find(c=>c.no==="072"))],
     [clone(CARDS.find(c=>c.no==="073")), clone(CARDS.find(c=>c.no==="074"))],
     [clone(CARDS.find(c=>c.no==="075")), clone(CARDS.find(c=>c.no==="076"))]
   ];
-  const allPackIndexes = shuffle(Array.from({length:30},(_,i)=>i));
-  const legendPackIndexes = allPackIndexes.slice(0,3);
-  const nonLegendPackIndexes = allPackIndexes.slice(3);
 
-  // R以上は伝説セット確定パックを避け、4枚目に最大1枚
-  const hitPackIndexes = nonLegendPackIndexes.slice(0,hits.length);
+  const allPackIndexes = shuffle(Array.from({length:30},(_,i)=>i));
+  const fixedLegendPackIndexes = allPackIndexes.slice(0,3);
+  const otherPackIndexes = allPackIndexes.slice(3);
+
+  // R以上は固定伝説パックを避け、4枚目に最大1枚
+  const hitPackIndexes = otherPackIndexes.slice(0,hits.length);
   const hitByPack = new Map();
   shuffle(hits).forEach((card,i)=>hitByPack.set(hitPackIndexes[i],card));
 
-  const legendByPack = new Map();
-  shuffle(legendPairs).forEach((pair,i)=>legendByPack.set(legendPackIndexes[i],pair));
+  const fixedLegendByPack = new Map();
+  shuffle(fixedLegendPairs).forEach((pair,i)=>fixedLegendByPack.set(fixedLegendPackIndexes[i],pair));
 
-  // 通常U枠の総数を計算
-  // 60枠中、伝説確定6枚とR以上置換分を除いた残り
-  const normalUSlotCount = 60 - 6 - hits.length;
-  let uPool = sampleWithReplacement(normalU,normalUSlotCount).map(clone);
-  uPool = shuffle(uPool);
+  // 固定伝説6枚とR以上による置換分を除いた通常U枠を均等化。
+  // 追加の伝説カード（071〜076）は、ほかのUと同様に1枚単位で入る。
+  const remainingUSlots = 60 - 6 - hits.length;
+  const uPool = balancedCards(normalU, remainingUSlots);
 
-  const cPool = sampleWithReplacement(byRarity("C"),90).map(clone);
+  // Cは全種類を一巡してから重複する方式で、90枚をできるだけ均等化
+  const cPool = balancedCards(byRarity("C"), 90);
   let cIndex = 0;
   let uIndex = 0;
 
@@ -151,20 +181,18 @@ function simulate() {
       cPool[cIndex++]
     ];
 
-    if(legendByPack.has(packIndex)) {
-      // 伝説セット確定パック：4・5枚目に左右セット
-      const pair = legendByPack.get(packIndex);
+    if(fixedLegendByPack.has(packIndex)) {
+      const pair = fixedLegendByPack.get(packIndex);
       pack.push(pair[0], pair[1]);
     } else {
-      // 4枚目：通常はU、当たりパックではR以上
       if(hitByPack.has(packIndex)) {
         pack.push(hitByPack.get(packIndex));
       } else {
         pack.push(uPool[uIndex++]);
       }
-      // 5枚目：通常U
       pack.push(uPool[uIndex++]);
     }
+
     return pack;
   });
 
